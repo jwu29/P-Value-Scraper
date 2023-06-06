@@ -25,8 +25,13 @@ pvalkeyword = ['P Value', 'P value','p-value','p value','P-value','P-Value']
 
 ## Find P-value from Table
 def FindTableP2(dir):
-    tables = tabula.read_pdf(dir, pages='all', multiple_tables=True)
+
     result = []
+
+    try: 
+        tables = tabula.read_pdf(dir, pages='all', multiple_tables=True)
+    except:
+        return result
     
     ## Filtering dataframes which are empty or has dimension 0.
     for i in range(len(tables)-1,-1,-1):
@@ -40,7 +45,7 @@ def FindTableP2(dir):
         if len(ComInd) != 0:
             for j in ComInd:
                 PValCol = T.loc[:, ColNames[j]].tolist()
-                PValCol = [y for y in PValCol if y == y]
+                PValCol = [str(y) for y in PValCol if y == y]
                 for x in PValCol:
                     if re.match(r"^0*\.[0-9]+$",x): ## finds "0.xxxx"
                         result.append(float(x))
@@ -65,31 +70,29 @@ P_vals = []
 acceptcharlist = ['0','1','2','3','4','5','6','7','8','9','.']
 
 ## Main Loop; adjust range accordingly
-for x in range(30):
+for x in range(0,len(filepaths),1):
     pathname = output_dir + '/' + filepaths[x]
+    print(x)
     print(pathname)
     Q = FindP(pathname)
-    print('Text P strings:')
-    print(Q)
 
     ## Check if a number comes after 'P='
     if Q != False:
         text = str(extract_text(pathname))
         for i in Q:
-            w = i+1
+            w = i
             if text[w] in acceptcharlist:
                 while text[w] in acceptcharlist:
                     w += 1
+                if text[w-1] == '.':
+                    w -= 1
                 if float(text[i:w]) < 1:
                     P_vals.append(float(text[i:w]))
     
     ## Appending elements of Table P values
     R = FindTableP2(pathname)
-    print('Table P-vals:')
-    print(R)
     for j in R:
         P_vals.append(j)
-    print('Total Extracted P-values:')
     print(P_vals)
 
 ## Uncomment the below line; FindTableP2 should be working.
